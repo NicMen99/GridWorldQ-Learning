@@ -1,6 +1,7 @@
 from enum import Enum
 import gymnasium as gym
 import numpy as np
+import pygame
 
 class Actions(Enum):
     UP = 0
@@ -9,8 +10,11 @@ class Actions(Enum):
     RIGHT = 3
 
 class Environment(gym.Env):
-    def __init__(self, grid_size:tuple[int, int] = (5, 5), target_positions:np.ndarray[np.ndarray[np.int32]] = np.array([[4, 4]])):
+    metadata = {"render_modes": ["human"], "render_fps": 10}
+
+    def __init__(self, grid_size:tuple[int, int] = (5, 5), target_positions:np.ndarray[np.ndarray[np.int32]] = np.array([[4, 4]]), render_mode = None):
         self.world_size:tuple = grid_size
+        self.window_size = 720
         self.world_targets = target_positions
         self.world_recharge_station = np.array([0, 0], dtype=np.int32)
 
@@ -35,6 +39,12 @@ class Environment(gym.Env):
             Actions.LEFT.value: np.array([-1, 0], dtype=np.int32),
             Actions.DOWN.value: np.array([0, -1], dtype=np.int32)
         }
+
+        assert render_mode is None or render_mode in self.metadata["render_modes"]
+        self.render_mode = render_mode
+
+        self.window = None
+        self.clock = None
 
     def reset(self, seed: int = None, options: dict = None):
         super().reset(seed=seed)
@@ -107,6 +117,9 @@ class Environment(gym.Env):
         else:
             reward -= 1
 
+        if self.render_mode == "human":
+            self._render_frame()
+
         return self.get_observations(), reward, terminated, truncated, self.get_info()
 
     def get_observations(self):
@@ -114,3 +127,62 @@ class Environment(gym.Env):
 
     def get_info(self):
         return {}
+
+    def _render_frame(self):
+        if self.window is None and self.render_mode == "human":
+            pygame.init()
+            pygame.display.init()
+            self.window = pygame.display.set_mode(
+                (self.window_size, self.window_size))
+        if self.clock is None and self.render_mode == "human":
+            self.clock = pygame.time.Clock()
+
+        canvas = pygame.Surface((self.window_size, self.window_size))
+        canvas.fill((255, 255, 255))
+
+        pix_square_size = (self.window_size/self.world_size[0])
+
+        for i in self.world_targets:
+            pygame.draw.rect(
+                canvas,
+                (255, 0, 0),
+                pygame.Rect(
+                    pix_square_size * i,
+                    (pix_square_size, pix_square_size)
+                )
+            )
+
+        pygame.draw.circle(
+            canvas,
+            (0, 0, 255),
+            (self.agent_location + 0.5) * pix_square_size,
+            pix_square_size/3
+        )
+
+        for i in range(self.world_size[0] + 1):
+            pygame.draw.line(
+                canvas,
+                0,
+                (0, pix_square_size * i),
+                (self.window_size, pix_square_size * i),
+                width=3
+            )
+            pygame.draw.line(
+                canvas,
+                0,
+                (pix_square_size * i, 0),
+                (pix_square_size * i, self.window_size),
+                width=3
+            )
+
+        if self.render_mode == "human":
+            self.window.blit(canvas, canvas.get_rect())
+            pygame.event.pump()
+            pygame.display.update()
+
+            self.clock.tick(self.metadata['render_fps'])
+
+    def close(self):
+        if self.window is not None:
+            pygame.display.quit()
+            pygame.quit()
