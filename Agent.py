@@ -1,12 +1,5 @@
-from enum import Enum
 import numpy as np
 import random
-
-class Actions(Enum):
-    UP = 0
-    DOWN = 1
-    LEFT = 2
-    RIGHT = 3
 
 class Agent:
     def __init__(self, discount_factor, c1, c2):
