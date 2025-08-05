@@ -1,6 +1,11 @@
 import gymnasium as gym
-import numpy as np
 
 if __name__ == '__main__':
-    pos = np.array([1, 0, 1])
-    print(np.where(pos == 0)[0])
+    gym.envs.registration.register(
+        id = 'GridWorld-v0',
+        entry_point = 'Environment:Environment',
+        max_episode_steps = 300
+    )
+
+    env = gym.make('GridWorld-v0')
+    pass
