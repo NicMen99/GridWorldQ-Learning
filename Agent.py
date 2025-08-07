@@ -10,8 +10,6 @@ class Agent:
                  initial_epsilon: float,
                  epsilon_decay: float,
                  final_epsilon: float,
-                 c1: float,
-                 c2: float,
                  discount_factor: float = 0.95
                  ):
         self.env = env
@@ -25,21 +23,23 @@ class Agent:
         self.epsilon_decay = epsilon_decay
         self.final_epsilon = final_epsilon
 
-    def epsilon_greedy_policy(self, obs: tuple[int, int, np.ndarray[np.bool_]]):
+    def epsilon_greedy_policy(self, state: dict):
+        state = (tuple(state['agent position']), state['agent charge'], tuple(state['visited positions']))
+
         r = random.random()
         if r < self.epsilon:
             return self.env.action_space.sample()
         else:
-            return int(np.argmax(self.QTable[obs]))
+            return int(np.argmax(self.QTable[state]))
 
-    def optimal_policy(self, state):
-        return np.argmax(self.QTable[state])
-
-    def update_table(self, state: tuple[int, int, np.ndarray[np.bool_]],
+    def update_table(self, state: dict,
                      action: int,
                      reward: float,
                      terminated: bool,
-                     next_state: tuple[int, int, np.ndarray[np.bool_]]):
+                     next_state: dict):
+
+        state = (tuple(state['agent position']), state['agent charge'], tuple(state['visited positions']))
+        next_state = (tuple(next_state['agent position']), next_state['agent charge'], tuple(next_state['visited positions']))
 
         future_q = (not terminated) * np.max(self.QTable[next_state])
         target = reward + self.discount_factor * future_q

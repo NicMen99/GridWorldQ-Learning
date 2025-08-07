@@ -19,14 +19,14 @@ class Environment(gym.Env):
         self.world_recharge_station = np.array([0, 0], dtype=np.int32)
 
         self.agent_location = self.world_recharge_station.copy()
-        self.max_charge = 10
+        self.max_charge = (2 * np.sum(np.abs(self.agent_location - (np.array(self.world_size) - 1)))) + 1
         self.agent_charge = self.max_charge
         self.visited_positions = np.zeros(len(self.world_targets))
 
         self.observation_space = gym.spaces.Dict(
             {
                 "agent position": gym.spaces.Box(low=0, high=self.world_size[0] - 1, shape=(2,), dtype=np.int32),
-                "agent charge": gym.spaces.Discrete(11),
+                "agent charge": gym.spaces.Discrete(int(self.max_charge + 1)),
                 "visited positions": gym.spaces.MultiBinary(len(self.world_targets))
             }
         )
@@ -51,6 +51,7 @@ class Environment(gym.Env):
 
         self.agent_location = self.world_recharge_station.copy()
         self.agent_charge = self.max_charge
+        self.visited_positions = np.zeros(len(self.world_targets))
 
         return self.get_observations(), self.get_info()
 
@@ -67,7 +68,7 @@ class Environment(gym.Env):
 
         # Check if position matches one of targets, then update state
         match = np.where(np.all(self.agent_location == self.world_targets, axis = 1))[0]
-        if match:
+        if match.size > 0:
             self.visited_positions[match[0]] = 1
 
         # Check if charge station, then recharge the robot
@@ -86,8 +87,6 @@ class Environment(gym.Env):
                 closest_target_distance = dist
                 closest_target = self.world_targets[i]
 
-        prev_dist = np.sum(np.abs(prev_agent_location - closest_target))
-
         # Calculus of the reward function
         reward = 0.0
 
@@ -105,7 +104,8 @@ class Environment(gym.Env):
         if self.agent_charge <= return_cost:
             reward -= 50
 
-        if closest_target:
+        if closest_target is not None:
+            prev_dist = np.sum(np.abs(prev_agent_location - closest_target))
             distance_change = prev_dist - closest_target_distance
             reward += distance_change * 5.0
 
@@ -123,7 +123,7 @@ class Environment(gym.Env):
         return self.get_observations(), reward, terminated, truncated, self.get_info()
 
     def get_observations(self):
-        return {"agent": self.agent_location, "agent charge": self.agent_charge, "visited positions": self.visited_positions}
+        return {"agent position": self.agent_location, "agent charge": self.agent_charge, "visited positions": self.visited_positions}
 
     def get_info(self):
         return {}
