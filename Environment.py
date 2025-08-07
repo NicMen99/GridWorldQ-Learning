@@ -66,56 +66,53 @@ class Environment(gym.Env):
         self.agent_location = np.clip(self.agent_location + direction, 0, self.world_size[0]-1)
         self.agent_charge -= 1
 
-        # Check if position matches one of targets, then update state
-        match = np.where(np.all(self.agent_location == self.world_targets, axis = 1))[0]
-        if match.size > 0:
-            self.visited_positions[match[0]] = 1
-
-        # Check if charge station, then recharge the robot
-        charging = np.array_equal(self.agent_location, self.world_recharge_station)
-        if charging:
-            self.agent_charge = self.max_charge
-
-        # Check for closest non visited target and calculate position
-        remaining = np.where(self.visited_positions == 0)[0]
-        closest_target_distance = float('inf')
-        closest_target = None
-
-        for i in remaining:
-            dist = np.sum(np.abs(self.agent_location - self.world_targets[i]))
-            if dist < closest_target_distance:
-                closest_target_distance = dist
-                closest_target = self.world_targets[i]
-
         # Calculus of the reward function
         reward = 0.0
-
-        if np.all(self.visited_positions):
-            reward += 1000
-            terminated = True
-            return self.get_observations(), reward, terminated, truncated, self.get_info()
-
-        if self.agent_charge <= 0:
-            reward -= 1000
-            terminated = True
-            return self.get_observations(), reward, terminated, truncated, self.get_info()
-
-        return_cost = np.sum(np.abs(self.agent_location - self.world_recharge_station))
-        if self.agent_charge <= return_cost:
-            reward -= 50
-
-        if closest_target is not None:
-            prev_dist = np.sum(np.abs(prev_agent_location - closest_target))
-            distance_change = prev_dist - closest_target_distance
-            reward += distance_change * 5.0
-
-        if len(match):
-            reward += 100
 
         if np.array_equal(prev_agent_location, self.agent_location):
             reward -= 10
         else:
             reward -= 1
+
+        # Check if position matches one of targets, then update state and reward
+        match = np.where(np.all(self.agent_location == self.world_targets, axis=1))[0]
+        if match.size > 0:
+            if self.visited_positions[match[0]] == 0:
+                self.visited_positions[match[0]] = 1
+                reward += 100
+
+        # Check if charge station, then recharge the agent
+        charging = np.array_equal(self.agent_location, self.world_recharge_station)
+        if charging:
+            self.agent_charge = self.max_charge
+            reward += 20
+
+        return_cost = np.sum(np.abs(self.agent_location - self.world_recharge_station))
+        if self.agent_charge <= return_cost:
+            reward -= 50
+
+        # Check for closest non visited target and calculate position
+        remaining = np.where(self.visited_positions == 0)[0]
+        if remaining.size > 0:
+            closest_target_distance = float('inf')
+            closest_target = None
+
+            for i in remaining:
+                dist = np.sum(np.abs(self.agent_location - self.world_targets[i]))
+                if dist < closest_target_distance:
+                    closest_target_distance = dist
+                    closest_target = self.world_targets[i]
+
+            prev_dist = np.sum(np.abs(prev_agent_location - closest_target))
+            distance_change = prev_dist - closest_target_distance
+            reward += distance_change * 5.0
+
+        if np.all(self.visited_positions):
+            reward += 1000
+            terminated = True
+        elif self.agent_charge <= 0:
+            reward -= 1000
+            terminated = True
 
         if self.render_mode == "human":
             self._render_frame()

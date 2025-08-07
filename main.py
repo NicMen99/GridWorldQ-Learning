@@ -1,12 +1,11 @@
 import gymnasium as gym
 import numpy as np
-from gymnasium.wrappers import FlattenObservation
 
 import Train
 from Agent import Agent
 
 if __name__ == '__main__':
-    n_episodes = 20000
+    n_episodes = 200000
     learning_rate = 0.01
     discount = 0.9
     start_epsilon = 1

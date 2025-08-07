@@ -1,11 +1,12 @@
 import gymnasium as gym
 import matplotlib.pyplot as plt
 import Agent
+from tqdm import tqdm
 
 def train(env: gym.Env, agent:Agent, n_episodes=1000, show_results = False
           ):
     episode_rewards = []
-    for episode in range(n_episodes):
+    for episode in tqdm(range(n_episodes)):
         obs, info = env.reset()
         done = False
 
