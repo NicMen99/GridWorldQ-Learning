@@ -10,7 +10,7 @@ class Actions(Enum):
     RIGHT = 3
 
 class Environment(gym.Env):
-    metadata = {"render_modes": ["human"], "render_fps": 10}
+    metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 10}
 
     def __init__(self, grid_size:tuple[int, int] = (5, 5), target_positions:np.ndarray[np.ndarray[np.int32]] = np.array([[4, 4]]), render_mode = None):
         self.world_size:tuple = grid_size
@@ -84,8 +84,11 @@ class Environment(gym.Env):
         # Check if charge station, then recharge the agent
         charging = np.array_equal(self.agent_location, self.world_recharge_station)
         if charging:
+            if self.agent_charge <= self.max_charge/2:
+                reward += 20
+            else:
+                reward -= 1
             self.agent_charge = self.max_charge
-            reward += 20
 
         return_cost = np.sum(np.abs(self.agent_location - self.world_recharge_station))
         if self.agent_charge <= return_cost:
@@ -139,15 +142,29 @@ class Environment(gym.Env):
 
         pix_square_size = (self.window_size/self.world_size[0])
 
-        for i in self.world_targets:
+        for i in range(self.visited_positions.size):
+            color = (0, 0, 0)
+            if self.visited_positions[i] == 1:
+                color = (0, 255, 0)
+            else:
+                color = (255, 0, 0)
             pygame.draw.rect(
                 canvas,
-                (255, 0, 0),
+                color,
                 pygame.Rect(
-                    pix_square_size * i,
+                    pix_square_size * self.world_targets[i],
                     (pix_square_size, pix_square_size)
                 )
             )
+
+        pygame.draw.rect(
+            canvas,
+            (51, 255, 255),
+            pygame.Rect(
+                (0, 0),
+                (pix_square_size, pix_square_size)
+            )
+        )
 
         pygame.draw.circle(
             canvas,
@@ -178,8 +195,16 @@ class Environment(gym.Env):
             pygame.display.update()
 
             self.clock.tick(self.metadata['render_fps'])
+        else:
+            return np.transpose(
+                np.array(pygame.surfarray.pixels3d(canvas)), axes=(1, 0, 2)
+            )
 
     def close(self):
         if self.window is not None:
             pygame.display.quit()
             pygame.quit()
+
+    def render(self):
+        if self.render_mode == "rgb_array":
+            return self._render_frame()

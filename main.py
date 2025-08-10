@@ -5,7 +5,7 @@ import Train
 from Agent import Agent
 
 if __name__ == '__main__':
-    n_episodes = 200000
+    n_episodes = 5000
     learning_rate = 0.01
     discount = 0.9
     start_epsilon = 1
@@ -19,14 +19,16 @@ if __name__ == '__main__':
         max_episode_steps = 300
     )
 
-    env = gym.make('GridWorld-v0', grid_size=(5, 5), target_positions=np.array([[2, 3], [1, 4], [4, 4]]))
+    env = gym.make('GridWorld-v0', grid_size=(5, 5), target_positions=np.array([[2, 3], [1, 4], [4, 4]]), render_mode = 'rgb_array')
     print(env.observation_space)
 
     agent = Agent(env, learning_rate, start_epsilon, epsilon_decay, final_epsilon, discount)
 
     print(dict(agent.QTable))
 
-    Train.train(env, agent, n_episodes, show_results=True)
+    Train.train_record(env, agent, n_episodes, period= 500)
 
     print("\n\n")
     print(dict(agent.QTable))
+
+    Train.test(env, agent, 4)
