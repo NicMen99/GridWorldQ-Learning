@@ -126,7 +126,7 @@ class Environment(gym.Env):
         return {"agent position": self.agent_location, "agent charge": self.agent_charge, "visited positions": self.visited_positions}
 
     def get_info(self):
-        return {}
+        return {"targets reached": np.sum(self.visited_positions)}
 
     def _render_frame(self):
         if self.window is None and self.render_mode == "human":
