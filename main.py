@@ -5,7 +5,7 @@ import Train
 from Agent import Agent
 
 if __name__ == '__main__':
-    n_episodes = 5000
+    n_episodes = 500000
     learning_rate = 0.01
     discount = 0.9
     start_epsilon = 1
@@ -24,11 +24,6 @@ if __name__ == '__main__':
 
     agent = Agent(env, learning_rate, start_epsilon, epsilon_decay, final_epsilon, discount)
 
-    print(dict(agent.QTable))
+    Train.train_record(env, agent, n_episodes, period= 1000, show_results=True)
 
-    Train.train_record(env, agent, n_episodes, period= 500)
-
-    print("\n\n")
-    print(dict(agent.QTable))
-
-    Train.test(env, agent, 4)
+    Train.test_record(env, agent, 5)
