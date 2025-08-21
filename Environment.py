@@ -76,7 +76,7 @@ class Environment(gym.Env):
         else:
             reward -= 1
 
-        # Check for farming (?)
+        # Check for farming
         if self.last_action is not None:
             if np.array_equal(direction + self.action_map[self.last_action], np.array([0, 0])):
                 reward -= 5000
@@ -86,22 +86,16 @@ class Environment(gym.Env):
         match = np.where(np.all(self.agent_location == self.world_targets, axis=1))[0]
         if match.size > 0:
             if self.visited_positions[match[0]] == 0:
-                self.visited_positions[match[0]] = 1
                 reward += 500 + (250 * np.sum(self.visited_positions))
+                self.visited_positions[match[0]] = 1
 
         # Check if charge station, then recharge the agent
         charging = np.array_equal(self.agent_location, self.world_recharge_station)
         if charging:
-            if self.agent_charge <= self.max_charge/3:
-                if self.number_of_recharges == 0:
-                    reward += 20
-                elif self.number_of_recharges > len(self.world_targets):
-                    reward -= 50
-                else:
-                    reward += 20 - int(20 / len(self.world_targets)) * self.number_of_recharges
+            if self.agent_charge <= self.max_charge/3 and self.number_of_recharges < len(self.world_targets):
+                reward += 20 - int(20 / len(self.world_targets)) * self.number_of_recharges
             else:
                 reward -= 50
-                pass
             self.agent_charge = self.max_charge
             self.number_of_recharges += 1
 
