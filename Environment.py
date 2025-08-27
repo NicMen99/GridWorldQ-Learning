@@ -72,28 +72,28 @@ class Environment(gym.Env):
         reward = 0.0
 
         if np.array_equal(prev_agent_location, self.agent_location):
-            reward -= 20
+            reward -= 200
         else:
             reward -= 1
 
         # Check for farming
         if self.last_action is not None:
             if np.array_equal(direction + self.action_map[self.last_action], np.array([0, 0])):
-                reward -= 5000
+                reward -= 500
         self.last_action = action
 
         # Check if position matches one of targets, then update state and reward
         match = np.where(np.all(self.agent_location == self.world_targets, axis=1))[0]
         if match.size > 0:
             if self.visited_positions[match[0]] == 0:
-                reward += 500 + (250 * np.sum(self.visited_positions))
+                reward += 1000 + (1000 * np.sum(self.visited_positions))
                 self.visited_positions[match[0]] = 1
 
         # Check if charge station, then recharge the agent
         charging = np.array_equal(self.agent_location, self.world_recharge_station)
         if charging:
             if self.agent_charge <= self.max_charge/3 and self.number_of_recharges < len(self.world_targets):
-                reward += 20 - int(20 / len(self.world_targets)) * self.number_of_recharges
+                reward += 250 - int(250 / len(self.world_targets)) * self.number_of_recharges
             else:
                 reward -= 50
             self.agent_charge = self.max_charge
@@ -101,13 +101,25 @@ class Environment(gym.Env):
 
         return_cost = np.sum(np.abs(self.agent_location - self.world_recharge_station))
         if self.agent_charge <= return_cost:
-            reward -= 100
+            reward -= 50
+
+        # Potential reward split in 2 behaviors based on agent charge
+        if return_cost < self.agent_charge + 2:
+            for i in range(len(self.world_targets)):
+                if self.visited_positions[i] == 0:
+                    distance = np.sum(np.abs(self.agent_location - self.world_targets[i]))
+                    modifier = 1 - (distance / (self.world_size[0] + self.world_size[1] - 2))
+                    reward += modifier * 500
+        else:
+            distance = np.sum(np.abs(self.agent_location - self.world_recharge_station))
+            modifier = 1 - (distance / (self.world_size[0] + self.world_size[1] - 2))
+            reward += modifier * 500
 
         if np.all(self.visited_positions):
-            reward += 5000
+            reward += 10000
             terminated = True
         elif self.agent_charge <= 0:
-            reward -= 5000
+            reward -= 10000
             terminated = True
 
         if self.render_mode == "human":

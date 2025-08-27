@@ -33,7 +33,7 @@ class Agent:
         state = (tuple(state['agent position']), state['agent charge'], tuple(state['visited positions']))
 
         r = random.random()
-        if r < self.epsilon:
+        if r < self.current_epsilon:
             return self.env.action_space.sample()
         else:
             return int(np.argmax(self.QTable[state]))
@@ -51,10 +51,8 @@ class Agent:
         target = reward + self.discount_factor * future_q
         temporal_difference = target - self.QTable[state][action]
         
-        self.QTable[state][action] = self.QTable[state][action] + self.lr * temporal_difference
+        self.QTable[state][action] = self.QTable[state][action] + self.current_lr * temporal_difference
 
-    def decay_epsilon(self):
-        self.epsilon = max(self.final_epsilon, self.epsilon - self.epsilon_decay)
     def decay(self):
         self.current_epsilon = max(self.final_epsilon, self.epsilon / (self.episode_count * self.epsilon_decay_factor + 1))
         self.current_lr = self.lr / (self.episode_count * self.lr_decay_factor + 1)
