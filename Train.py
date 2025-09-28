@@ -33,7 +33,7 @@ def test_record(env: gym.Env, agent:Agent, n_episodes=10):
         episode_metrics["rewards"].append(info["episode"]["r"])
         episode_metrics["steps"].append(info["episode"]["l"])
         episode_metrics["targets"].append(info["targets reached"])
-        episode_metrics["success"].append(1 if info["targets reached"]==len(env.unwrapped.world_targets) else 0)
+        episode_metrics["success"].append(1 if info["targets reached"]==len(env.unwrapped.world_targets) and np.array_equal(obs["agent position"], info["starting position"]) else 0)
 
     agent.epsilon = old_epsilon
 
@@ -66,7 +66,9 @@ def train_record(env: gym.Env, agent:Agent, n_episodes=1000, period = 500, show_
         "success": []
     }
 
-    for _ in tqdm(range(n_episodes)):
+    checkpoints = []
+
+    for i in tqdm(range(n_episodes)):
         obs, info = reg_env.reset()
         done = False
 
@@ -87,8 +89,24 @@ def train_record(env: gym.Env, agent:Agent, n_episodes=1000, period = 500, show_
         episode_metrics["targets"].append(info["targets reached"])
         episode_metrics["success"].append(1 if info["targets reached"]== len(env.unwrapped.world_targets) else 0)
 
+        if i % period == 0:
+            old_epsilon = agent.epsilon
+            agent.epsilon = 0.0
+
+            obs, info = reg_env.reset()
+            done = False
+
+            while not done:
+                action = agent.epsilon_greedy_policy(obs)
+                obs, reward, terminated, truncated, info = reg_env.step(action)
+                done = terminated or truncated
+
+            checkpoints.append(info["episode"]["r"])
+
+            agent.epsilon = old_epsilon
+
     if show_results:
-        fig, axs = plt.subplots(2, 1)
+        fig, axs = plt.subplots(3, 1)
 
         data1 = episode_metrics["rewards"]
         data2 = episode_metrics["steps"]
@@ -111,14 +129,18 @@ def train_record(env: gym.Env, agent:Agent, n_episodes=1000, period = 500, show_
         axs01.plot(data2, color=color)
 
         color = "tab:blue"
-        axs[1].set_xlabel("Episodes")
-        axs[1].set_ylabel("Success Rate", color=color)
-        axs[1].plot(data4, color=color)
+        axs[1].set_ylabel("Reward", color=color)
+        axs[1].plot(checkpoints, color=color)
 
-        axs11 = axs[1].twinx()
+        color = "tab:blue"
+        axs[2].set_xlabel("Episodes")
+        axs[2].set_ylabel("Success Rate", color=color)
+        axs[2].plot(data4, color=color)
+
+        axs21 = axs[2].twinx()
         color = "tab:red"
-        axs11.set_ylabel("Objectives reached", color=color)
-        axs11.plot(data3, color=color)
+        axs21.set_ylabel("Objectives reached", color=color)
+        axs21.plot(data3, color=color)
 
         fig.suptitle("Episode Metrics")
         fig.tight_layout()
