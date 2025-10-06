@@ -7,6 +7,7 @@ class Agent:
     def __init__(self,
                  env: gym.Env,
                  learning_rate: float,
+                 final_lr: float,
                  initial_epsilon: float,
                  final_epsilon: float,
                  discount_factor: float = 0.95,
@@ -18,6 +19,7 @@ class Agent:
         self.QTable = defaultdict(lambda: np.zeros(env.action_space.n))
 
         self.lr = learning_rate
+        self.final_lr = final_lr
         self.discount_factor = discount_factor
 
         self.epsilon = initial_epsilon
@@ -55,5 +57,5 @@ class Agent:
 
     def decay(self):
         self.current_epsilon = max(self.final_epsilon, self.epsilon / (self.episode_count * self.epsilon_decay_factor + 1))
-        self.current_lr = self.lr / (self.episode_count * self.lr_decay_factor + 1)
+        self.current_lr = max(self.final_lr, self.lr / (self.episode_count * self.lr_decay_factor + 1))
         self.episode_count += 1

@@ -22,6 +22,7 @@ class Environment(gym.Env):
         self.max_charge = (2 * np.sum(np.abs(self.agent_location - (np.array(self.world_size) - 1)))) + 1
         self.agent_charge = self.max_charge
         self.visited_positions = np.zeros(len(self.world_targets))
+        self.episode_steps = 0
 
         self.observation_space = gym.spaces.Dict(
             {
@@ -58,6 +59,7 @@ class Environment(gym.Env):
     def step(self, action: int):
         terminated = False
         truncated = False
+        self.episode_steps += 1
 
         direction = self.action_map[action]
         prev_agent_location = self.agent_location.copy()
@@ -72,26 +74,28 @@ class Environment(gym.Env):
         if np.array_equal(prev_agent_location, self.agent_location):
             reward -= 200
         else:
-            reward -= 1
+            reward -= 5
 
         # Check if position matches one of targets, then update state and reward
         match = np.where(np.all(self.agent_location == self.world_targets, axis=1))[0]
         if match.size > 0:
             if self.visited_positions[match[0]] == 0:
-                reward += 1000 + (1000 * np.sum(self.visited_positions))
+                reward += 500 # + (1000 * np.sum(self.visited_positions))
                 self.visited_positions[match[0]] = 1
 
         # Check if charge station, then recharge the agent
-        # charging = np.array_equal(self.agent_location, self.world_recharge_station)
-        # if charging:
-        #     self.agent_charge = self.max_charge
+        charging = np.array_equal(self.agent_location, self.world_recharge_station)
+        if charging:
+            self.agent_charge = self.max_charge
 
-        if (np.all(self.visited_positions) and np.array_equal(self.agent_location, self.world_recharge_station)):
-            reward += 10000
+        if np.all(self.visited_positions) and np.array_equal(self.agent_location, self.world_recharge_station):
+            reward += 50000
             terminated = True
         elif self.agent_charge <= 0:
             reward -= 10000
             terminated = True
+        if self.episode_steps == 300 and not terminated:
+            reward -= 10000
 
         if self.render_mode == "human":
             self._render_frame()

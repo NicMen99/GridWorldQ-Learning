@@ -87,7 +87,7 @@ def train_record(env: gym.Env, agent:Agent, n_episodes=1000, period = 500, show_
         episode_metrics["rewards"].append(info["episode"]["r"])
         episode_metrics["steps"].append(info["episode"]["l"])
         episode_metrics["targets"].append(info["targets reached"])
-        episode_metrics["success"].append(1 if info["targets reached"]== len(env.unwrapped.world_targets) else 0)
+        episode_metrics["success"].append(1 if info["targets reached"]==len(env.unwrapped.world_targets) and np.array_equal(obs["agent position"], info["starting position"]) else 0)
 
         if i % period == 0:
             old_epsilon = agent.epsilon
