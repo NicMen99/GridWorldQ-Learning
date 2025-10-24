@@ -88,6 +88,12 @@ class Environment(gym.Env):
         if charging:
             self.agent_charge = self.max_charge
 
+        if np.all(self.visited_positions):
+            prev_distance = np.sum(np.abs(prev_agent_location - self.world_recharge_station))
+            distance = np.sum(np.abs(self.agent_location - self.world_recharge_station))
+            distance_change = prev_distance - distance
+            reward += 2500 * distance_change
+
         if np.all(self.visited_positions) and np.array_equal(self.agent_location, self.world_recharge_station):
             reward += 50000
             terminated = True
