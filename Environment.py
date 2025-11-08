@@ -36,9 +36,9 @@ class Environment(gym.Env):
 
         self.action_map = {
             Actions.RIGHT.value: np.array([1, 0], dtype=np.int32),
-            Actions.UP.value: np.array([0, 1], dtype=np.int32),
+            Actions.UP.value: np.array([0, -1], dtype=np.int32),
             Actions.LEFT.value: np.array([-1, 0], dtype=np.int32),
-            Actions.DOWN.value: np.array([0, -1], dtype=np.int32)
+            Actions.DOWN.value: np.array([0, 1], dtype=np.int32)
         }
 
         assert render_mode is None or render_mode in self.metadata["render_modes"]

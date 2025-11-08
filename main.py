@@ -14,6 +14,8 @@ if __name__ == '__main__':
     epsilon_decay_factor = 0.000005
     lr_decay_factor = 0.000004
 
+    load_and_test = False
+
 
     gym.envs.registration.register(
         id = 'GridWorld-v0',
@@ -21,11 +23,15 @@ if __name__ == '__main__':
         max_episode_steps = 300
     )
 
-    env = gym.make('GridWorld-v0', grid_size=(10, 10), target_positions=np.array([[1, 3], [6, 7], [9,2]]), render_mode = 'rgb_array')
+    env = gym.make('GridWorld-v0', grid_size=(10, 10), target_positions=np.array([[1, 3], [6, 7], [9,2], [1, 8], [5, 1]]), render_mode = 'rgb_array')
     # env = gym.make('GridWorld-v0', grid_size=(5, 5), target_positions=np.array([[1, 3], [4, 2], [4, 4]]), render_mode = 'rgb_array')
 
     agent = Agent(env, learning_rate, final_lr, start_epsilon, final_epsilon, discount)
 
-    Train.train_record(env, agent, n_episodes, period= 5000, show_results=True)
+    if not load_and_test:
+        Train.train_record(env, agent, n_episodes, period= 5000, show_results=False)
+        agent.save_table_on_file()
+    else:
+        agent.load_table_from_file()
 
     Train.test_record(env, agent, 20)

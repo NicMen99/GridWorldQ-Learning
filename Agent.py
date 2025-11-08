@@ -1,7 +1,10 @@
+import ast
+import os
 from collections import defaultdict
 import numpy as np
 import gymnasium as gym
 import random
+import json
 
 class Agent:
     def __init__(self,
@@ -32,7 +35,10 @@ class Agent:
         self.current_epsilon = self.epsilon
 
     def epsilon_greedy_policy(self, state: dict):
-        state = (tuple(state['agent position']), state['agent charge'], tuple(state['visited positions']))
+        state = (tuple(int(x) for x in state['agent position']),
+                 int(state['agent charge']),
+                 tuple(float(x) for x in state['visited positions'].tolist())
+        )
 
         r = random.random()
         if r < self.current_epsilon:
@@ -46,8 +52,14 @@ class Agent:
                      terminated: bool,
                      next_state: dict):
 
-        state = (tuple(state['agent position']), state['agent charge'], tuple(state['visited positions']))
-        next_state = (tuple(next_state['agent position']), next_state['agent charge'], tuple(next_state['visited positions']))
+        state = (tuple(int(x) for x in state['agent position']),
+                 int(state['agent charge']),
+                 tuple(float(x) for x in state['visited positions'].tolist())
+                 )
+        next_state = (tuple(int(x) for x in next_state['agent position']),
+                 int(next_state['agent charge']),
+                 tuple(float(x) for x in next_state['visited positions'].tolist())
+                 )
 
         future_q = (not terminated) * np.max(self.QTable[next_state])
         target = reward + self.discount_factor * future_q
@@ -59,3 +71,23 @@ class Agent:
         self.current_epsilon = max(self.final_epsilon, self.epsilon / (self.episode_count * self.epsilon_decay_factor + 1))
         self.current_lr = max(self.final_lr, self.lr / (self.episode_count * self.lr_decay_factor + 1))
         self.episode_count += 1
+
+    def save_table_on_file(self, directory: str = "."):
+        qTable = dict(self.QTable)
+        saveable = {
+            str(k): v.tolist() for k, v in qTable.items()
+        }
+        with open(directory + "/QTable.json", "w") as f:
+            json.dump(saveable, f, indent=4)
+
+    def load_table_from_file(self, directory: str = "."):
+        with open(directory + "/QTable.json", "r") as f:
+            saveable = json.load(f)
+        loaded_table = {}
+
+        for k_str, v_list in saveable.items():
+            key_tuple = ast.literal_eval(k_str)
+            value_np = np.array(v_list)
+            loaded_table[key_tuple] = value_np
+
+        self.QTable = defaultdict(lambda : np.zeros(self.env.action_space.n), loaded_table)
