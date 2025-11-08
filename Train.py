@@ -18,8 +18,8 @@ def test_record(env: gym.Env, agent:Agent, n_episodes=10):
         "success": []
     }
 
-    old_epsilon = agent.epsilon
-    agent.epsilon = 0.0
+    old_epsilon = agent.current_epsilon
+    agent.current_epsilon = 0.0
 
     for _ in tqdm(range(n_episodes)):
         obs, info = reg_env.reset()
@@ -35,7 +35,7 @@ def test_record(env: gym.Env, agent:Agent, n_episodes=10):
         episode_metrics["targets"].append(info["targets reached"])
         episode_metrics["success"].append(1 if info["targets reached"]==len(env.unwrapped.world_targets) and np.array_equal(obs["agent position"], info["starting position"]) else 0)
 
-    agent.epsilon = old_epsilon
+    agent.current_epsilon = old_epsilon
 
     reg_env.close()
 
