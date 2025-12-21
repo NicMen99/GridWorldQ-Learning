@@ -19,7 +19,7 @@ class Environment(gym.Env):
         self.world_recharge_station = np.array([0, 0], dtype=np.int32)
 
         self.agent_location = self.world_recharge_station.copy()
-        self.max_charge = (2 * np.sum(np.abs(self.agent_location - (np.array(self.world_size) - 1)))) + 1
+        self.max_charge = (2 * np.sum(np.abs(self.agent_location - (np.array(self.world_size) - 1)))) + 2
         self.agent_charge = self.max_charge
         self.visited_positions = np.zeros(len(self.world_targets))
         self.episode_steps = 0
@@ -50,9 +50,12 @@ class Environment(gym.Env):
     def reset(self, seed: int = None, options: dict = None):
         super().reset(seed=seed)
 
+        # self.episode_count += 1
+
         self.agent_location = self.world_recharge_station.copy()
         self.agent_charge = self.max_charge
         self.visited_positions = np.zeros(len(self.world_targets))
+        self.episode_steps = 0
 
         return self.get_observations(), self.get_info()
 
@@ -74,13 +77,13 @@ class Environment(gym.Env):
         if np.array_equal(prev_agent_location, self.agent_location):
             reward -= 200
         else:
-            reward -= 5
+            reward -= 150
 
         # Check if position matches one of targets, then update state and reward
         match = np.where(np.all(self.agent_location == self.world_targets, axis=1))[0]
         if match.size > 0:
             if self.visited_positions[match[0]] == 0:
-                reward += 500 # + (1000 * np.sum(self.visited_positions))
+                reward += 1000 # + (1000 * np.sum(self.visited_positions))
                 self.visited_positions[match[0]] = 1
 
         # Check if charge station, then recharge the agent
@@ -92,13 +95,16 @@ class Environment(gym.Env):
             prev_distance = np.sum(np.abs(prev_agent_location - self.world_recharge_station))
             distance = np.sum(np.abs(self.agent_location - self.world_recharge_station))
             distance_change = prev_distance - distance
-            reward += 2500 * distance_change
+            reward += 150 * distance_change
 
         if np.all(self.visited_positions) and np.array_equal(self.agent_location, self.world_recharge_station):
-            reward += 50000
+            reward += 100000
             terminated = True
         elif self.agent_charge <= 0:
-            reward -= 10000
+            if np.all(self.visited_positions):
+                reward -= 50000
+            else:
+                reward -= 10000
             terminated = True
         if self.episode_steps == 300 and not terminated:
             reward -= 10000

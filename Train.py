@@ -90,8 +90,8 @@ def train_record(env: gym.Env, agent:Agent, n_episodes=1000, period = 500, show_
         episode_metrics["success"].append(1 if info["targets reached"]==len(env.unwrapped.world_targets) and np.array_equal(obs["agent position"], info["starting position"]) else 0)
 
         if i % period == 0:
-            old_epsilon = agent.epsilon
-            agent.epsilon = 0.0
+            old_epsilon = agent.current_epsilon
+            agent.current_epsilon = 0.0
 
             obs, info = reg_env.reset()
             done = False
@@ -103,7 +103,7 @@ def train_record(env: gym.Env, agent:Agent, n_episodes=1000, period = 500, show_
 
             checkpoints.append(info["episode"]["r"])
 
-            agent.epsilon = old_epsilon
+            agent.current_epsilon = old_epsilon
 
     if show_results:
         fig, axs = plt.subplots(3, 1)
