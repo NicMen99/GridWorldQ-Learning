@@ -54,7 +54,7 @@ def test_record(env: gym.Env, agent:Agent, n_episodes=10):
     print(f'Targets_reached: {avg_targets_per_episode:.2f}/{len(env.unwrapped.world_targets)} +- {std_targets:.2f}')
     print(f'Success rate: {success_rate:.2f}%')
 
-def train_record(env: gym.Env, agent:Agent, n_episodes=1000, period = 500, show_results = False):
+def train_record(env: gym.Env, agent:Agent, n_episodes=1000, period = 500, show_results = False, memory_batch = 32):
     reg_env = gym.wrappers.RecordVideo(env, video_folder="robot_training/training", name_prefix="training", episode_trigger=lambda x: x % period == 0)
 
     reg_env = RecordEpisodeStatistics(reg_env)
@@ -77,12 +77,28 @@ def train_record(env: gym.Env, agent:Agent, n_episodes=1000, period = 500, show_
 
             next_obs, reward, terminated, truncated, info = reg_env.step(action)
 
-            agent.update_table(obs, action, reward, terminated, next_obs)
+            agent.experience_buffer.add_experience(obs, action, reward, next_obs, terminated)
+
+            samples, indices, weights = agent.experience_buffer.sample_experience(memory_batch)
+            new_td = []
+
+            for j in range(len(samples)):
+                experience = samples[j]
+                w = weights[j]
+
+                td_err = agent.update_table_replay(experience[0], experience[1], experience[2], experience[4], experience[3], w)
+
+                new_td.append(td_err)
+
+            agent.experience_buffer.update_priorities(indices, new_td)
+
+            # agent.update_table(obs, action, reward, terminated, next_obs)
 
             done = terminated or truncated
             obs = next_obs
 
         agent.decay()
+        agent.experience_buffer.update_beta()
 
         episode_metrics["rewards"].append(info["episode"]["r"])
         episode_metrics["steps"].append(info["episode"]["l"])

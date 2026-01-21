@@ -22,6 +22,7 @@ class Environment(gym.Env):
         self.max_charge = (2 * np.sum(np.abs(self.agent_location - (np.array(self.world_size) - 1)))) + 2
         self.agent_charge = self.max_charge
         self.visited_positions = np.zeros(len(self.world_targets))
+        # self.episode_count = 0
         self.episode_steps = 0
 
         self.observation_space = gym.spaces.Dict(
@@ -88,6 +89,7 @@ class Environment(gym.Env):
 
         # Check if charge station, then recharge the agent
         charging = np.array_equal(self.agent_location, self.world_recharge_station)
+        # charge_before_recharge = self.agent_charge
         if charging:
             self.agent_charge = self.max_charge
 
