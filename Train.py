@@ -67,6 +67,8 @@ def train_record(env: gym.Env, agent:Agent, n_episodes=1000, period = 500, show_
     }
 
     checkpoints = []
+    window = int(n_episodes / 50)
+    best_success_rate = -1.0
 
     for i in tqdm(range(n_episodes)):
         obs, info = reg_env.reset()
@@ -91,8 +93,6 @@ def train_record(env: gym.Env, agent:Agent, n_episodes=1000, period = 500, show_
                 new_td.append(td_err)
 
             agent.experience_buffer.update_priorities(indices, new_td)
-
-            # agent.update_table(obs, action, reward, terminated, next_obs)
 
             done = terminated or truncated
             obs = next_obs
@@ -121,6 +121,14 @@ def train_record(env: gym.Env, agent:Agent, n_episodes=1000, period = 500, show_
 
             agent.current_epsilon = old_epsilon
 
+            if i > window:
+                current_sr = np.mean(episode_metrics["success"][-window:])
+
+                if current_sr >= best_success_rate:
+                    best_success_rate = current_sr
+                    agent.save_table_on_file("best_table.json")
+
+
     if show_results:
         fig, axs = plt.subplots(3, 1)
 
@@ -129,7 +137,6 @@ def train_record(env: gym.Env, agent:Agent, n_episodes=1000, period = 500, show_
         data3 = episode_metrics["targets"]
         data4 = episode_metrics["success"]
 
-        window = int(n_episodes / 50)
         data1 = np.convolve(data1, np.ones(window) / window, "same")
         data2 = np.convolve(data2, np.ones(window) / window, "same")
         data3 = np.convolve(data3, np.ones(window) / window, "same")

@@ -13,9 +13,9 @@ if __name__ == '__main__':
     start_epsilon = 1
     final_epsilon = 0.0
     epsilon_decay_factor = 0.001
-    lr_decay_factor = 0.001
+    lr_decay_factor = 0.0001
 
-    load_and_test = False
+    load_and_test = True
 
     buffer_size = 10000
     buffer = PrioritizedBuffer.PrioritizedBuffer(buffer_size, n_episodes)
@@ -26,15 +26,14 @@ if __name__ == '__main__':
         max_episode_steps = 300
     )
 
-    env = gym.make('GridWorld-v0', grid_size=(10, 10), target_positions=np.array([[1, 3], [6, 7], [9,2], [1, 8], [5, 1]]), render_mode = 'rgb_array')
-    # env = gym.make('GridWorld-v0', grid_size=(5, 5), target_positions=np.array([[1, 3], [4, 2], [4, 4]]), render_mode = 'rgb_array')
+    env = gym.make('GridWorld-v0', grid_size=(10, 10), target_positions=np.array([[7, 4], [0, 2], [4, 8], [9, 0], [1, 6]]), render_mode = 'rgb_array')
 
     agent = Agent(env, learning_rate, final_lr, start_epsilon, final_epsilon, buffer, discount, epsilon_decay_factor, lr_decay_factor)
 
     if not load_and_test:
         Train.train_record(env, agent, n_episodes, period= 5000, show_results=True)
-        agent.save_table_on_file()
+        agent.save_table_on_file(filename = "final_table.json")
     else:
-        agent.load_table_from_file()
+        agent.load_table_from_file(filename="best_table.json")
 
     Train.test_record(env, agent, 20)

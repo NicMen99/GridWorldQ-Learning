@@ -106,16 +106,16 @@ class Agent:
         self.current_epsilon = max(self.final_epsilon, self.epsilon / (self.episode_count * self.epsilon_decay_factor + 1))
         self.current_lr = max(self.final_lr, self.lr / (self.episode_count * self.lr_decay_factor + 1))
 
-    def save_table_on_file(self, directory: str = "."):
+    def save_table_on_file(self, filename: str = "QTable.json", directory: str = "."):
         qTable = dict(self.QTable)
         saveable = {
             str(k): v.tolist() for k, v in qTable.items()
         }
-        with open(directory + "/QTable.json", "w") as f:
+        with open(directory + "/" + filename, "w") as f:
             json.dump(saveable, f, indent=4)
 
-    def load_table_from_file(self, directory: str = "."):
-        with open(directory + "/QTable.json", "r") as f:
+    def load_table_from_file(self, filename: str = "QTable.json", directory: str = "."):
+        with open(directory + "/" +filename, "r") as f:
             saveable = json.load(f)
         loaded_table = {}
 
