@@ -163,19 +163,19 @@ Estimated training time: ~10 hrs per 2.5M episodes on a 10 x 10 grid with a memo
 
 Below is an example of successfully completed training and related graphs.
 
-![Example A](github_resources\eval_1.gif)
+![Example A](github_resources/eval_1.gif)
 
 ![alt text](github_resources/final_PER_env2.png)
 
 ---
 
-![Example B](github_resources\eval_2.gif)
+![Example B](github_resources/eval_2.gif)
 
 ![alt text](github_resources/final_PER_env4_2.png)
 
 ---
 
-![Example C](github_resources\eval_3.gif)
+![Example C](github_resources/eval_3.gif)
 
 ![alt text](github_resources/final_PER_env1.png)
 
